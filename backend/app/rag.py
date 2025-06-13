@@ -40,20 +40,23 @@ class RAGSystem:
         try:
             wiki_docs = retrieve_wikipedia(query)
             all_documents.extend(wiki_docs)
+            logger.info(f"Retrieved {len(wiki_docs)} Wikipedia documents")
         except Exception as e:
             logger.error(f"Error fetching Wikipedia documents: {e}")
-
+        
         # Fetch from News
         try:
             news_docs = retrieve_news(query)
             all_documents.extend(news_docs)
+            logger.info(f"Retrieved {len(news_docs)} news documents")
         except Exception as e:
             logger.error(f"Error fetching news documents: {e}")
-
+        
         # Fetch from Reddit
         try:
             reddit_docs = retrieve_reddit(query)
             all_documents.extend(reddit_docs)
+            logger.info(f"Retrieved {len(reddit_docs)} Reddit documents")
         except Exception as e:
             logger.error(f"Error fetching Reddit documents: {e}")
         
@@ -75,6 +78,8 @@ class RAGSystem:
         
         # Persist the vector store
         self.vector_store.persist()
+        
+        logger.info(f"Indexed {len(chunked_docs)} document chunks")
     
     def get_rag_chain(self, k: int = None) -> RetrievalQA:
         """Get the RAG chain for question answering."""
@@ -123,6 +128,7 @@ class RAGSystem:
             self.vector_store.delete_collection()
             # Reinitialize
             self.vector_store = self._init_vector_store()
+            logger.info("Vector store cleared")
         except Exception as e:
             logger.error(f"Error clearing vector store: {e}")
 

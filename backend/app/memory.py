@@ -38,11 +38,11 @@ class ChatMemoryManager:
     def add_message(self, human_input: str, ai_output: str) -> None:
         """Add a conversation turn to memory."""
         self.buffer_memory.save_context(
-            {"input": human_input},
+            {"question": human_input},
             {"output": ai_output}
         )
         self.summary_memory.save_context(
-            {"input": human_input},
+            {"question": human_input},
             {"output": ai_output}
         )
     

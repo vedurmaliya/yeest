@@ -77,7 +77,13 @@ async def chat(request: ChatRequest):
             memory_manager.load_from_history(history_dicts)
         
         # Fetch fresh documents and index them
-        rag_system.fetch_and_index_documents(request.question)
+        logger.info(f"Processing question: {request.question}")
+        documents = rag_system.fetch_and_index_documents(request.question)
+        logger.info(f"Total documents retrieved: {len(documents)}")
+
+        # Log document sources for debugging
+        for doc in documents[:3]:  # Log first 3 documents
+            logger.info(f"Document source: {doc.metadata.get('source', 'unknown')}, title: {doc.metadata.get('title', 'no title')[:50]}")
 
         # Get the RAG chain
         rag_chain = rag_system.get_rag_chain()
@@ -87,6 +93,9 @@ async def chat(request: ChatRequest):
 
         answer = result["result"]
         source_documents = result.get("source_documents", [])
+
+        # Log what sources were actually used in the answer
+        logger.info(f"Sources used in answer: {[doc.metadata.get('title', 'no title')[:30] for doc in source_documents]}")
         
         # Format sources
         sources = []
@@ -99,6 +108,10 @@ async def chat(request: ChatRequest):
         
         # Add to memory
         memory_manager.add_message(request.question, answer)
+        
+
+        
+        logger.info(f"Generated answer with {len(sources)} sources")
         
         return ChatResponse(
             answer=answer,
