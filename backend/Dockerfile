@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM python:3.11-slim
 WORKDIR /app
 
+# Create non-root user
+RUN useradd --create-home appuser
+
 # Copy installed packages and executables from the builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
@@ -22,7 +25,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy your app code
 COPY app/ ./app
 
-# Create vector store dir with correct permissions
+# Create vector store dir and set correct permissions
 RUN mkdir -p /app/chroma_db && chown -R appuser:appuser /app/chroma_db
 
 # Environment variables & port
@@ -35,8 +38,7 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:$PORT/health || exit 1
 
-# Run as non-root user
-RUN useradd --create-home appuser
+# Switch to non-root user
 USER appuser
 
 # Start the app (shell form to expand $PORT)
