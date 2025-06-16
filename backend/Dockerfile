@@ -8,23 +8,24 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Install Python deps
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # ─── Runtime Stage ─────────────────────────────────────
 FROM python:3.11-slim
 WORKDIR /app
 
-# Copy only the site‑packages from the builder
+# Copy installed packages and executables from the builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy your app code
-COPY app/ ./app
+COPY backend/app/ ./app
 
 # Create vector store dir
 RUN mkdir -p /app/chroma_db
 
-# Expose & environment variables
+# Environment variables & port
 ENV PORT=8080 \
     PYTHONPATH=/app \
     VECTOR_STORE_PATH=/app/chroma_db
@@ -34,9 +35,10 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:$PORT/health || exit 1
 
-# Run as non‑root user (optional but recommended)
+# Run as non-root user
 RUN useradd --create-home appuser
 USER appuser
 
-# Start the app with Uvicorn on the correct port
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
+# Start the app with Uvicorn
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT}"]
+
