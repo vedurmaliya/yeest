@@ -1,0 +1,38 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # 1. Build Docker image from backend/
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: backend
+    args:
+      [
+        'build',
+        '-t',
+        'asia-south1-docker.pkg.dev/prime-motif-463107-q3/yeest-backend-repo/backend:$SHORT_SHA',
+        '.'
+      ]
+
+  # 2. Push image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        'asia-south1-docker.pkg.dev/prime-motif-463107-q3/yeest-backend-repo/backend:$SHORT_SHA'
+      ]
+
+  # 3. Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'run',
+        'deploy',
+        'yeest-backend',
+        '--image=asia-south1-docker.pkg.dev/prime-motif-463107-q3/yeest-backend-repo/backend:$SHORT_SHA',
+        '--region=asia-south1',
+        '--platform=managed',
+        '--allow-unauthenticated',
+        '--quiet'
+      ]
+
