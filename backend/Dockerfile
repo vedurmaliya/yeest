@@ -22,8 +22,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy your app code
 COPY app/ ./app
 
-# Create vector store dir
-RUN mkdir -p /app/chroma_db
+# Create vector store dir with correct permissions
+RUN mkdir -p /app/chroma_db && chown -R appuser:appuser /app/chroma_db
 
 # Environment variables & port
 ENV PORT=8080 \
@@ -39,5 +39,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 RUN useradd --create-home appuser
 USER appuser
 
-# Start the app with Uvicorn via shell form for env expansion
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
+# Start the app (shell form to expand $PORT)
+CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
